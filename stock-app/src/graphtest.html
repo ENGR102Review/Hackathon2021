@@ -1,0 +1,281 @@
+<head>
+
+<style>
+
+</style>
+
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.5.1/chart.min.js" integrity="sha512-Wt1bJGtlnMtGP0dqNFH1xlkLBNpEodaiQ8ZN5JLA5wpc1sUlk/O5uuOMNgvzddzkpvZ9GLyYNa8w2s7rqiTk5Q==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+</head>
+<body style="background-color:#1A1A1C;text-align:center; color: white; font-family: Gill Sans, sans-serif;">>
+
+<script>
+
+CON_KEY = "XIIUXESKP989BVUXA5TTX0AQZRUZZNQB";
+
+CURR_CHART = null;
+CHART_TIME = null;
+
+function getSelectedRadioBtn(){
+
+var buttons = document.getElementsByTagName( 'input' );
+    for( i = 0; i < buttons.length; i++ ) {
+        if(buttons[i].type == 'radio' && buttons[i].checked ) {
+            return buttons[i].value;
+        }
+    }
+
+return 'day';
+
+}
+
+
+function sendGet(url, params, callback){
+	conn = new XMLHttpRequest();
+    
+    paramsEncoded = "?" + Object.keys(params).map(
+	function(key){
+          return key+"="+encodeURIComponent(params[key])
+        }).join("&");
+		
+	conn.open( "GET", url + paramsEncoded, true ); 
+	
+	
+	prevValue = "";
+	
+     conn.onreadystatechange = (e) => {
+		if(conn.responseText != ''){
+			
+		if(conn.responseText != prevValue){
+			callback(conn.responseText);
+			prevValue = conn.responseText;
+		}
+			
+		
+		}
+		 
+	 }
+	 conn.send();
+	
+}
+
+function getHistoricalQuote(symbol, rangeBack){
+	switch(rangeBack) {
+  case 'day':
+    CHART_TIME = rangeBack;
+	params = {
+		
+		'apikey': CON_KEY,
+		'periodType': 'day',
+		'period': '1',
+		'frequencyType': 'minute',
+		'frequency': '5'
+		
+	};
+	
+	sendGet("https://api.tdameritrade.com/v1/marketdata/" + symbol.toUpperCase() +"/pricehistory", params, loadChart)
+	
+    break;
+	
+  case 'week':
+  CHART_TIME = rangeBack;
+  params = {
+		
+		'apikey': CON_KEY,
+		'periodType': 'day',
+		'period': '5',
+		'frequencyType': 'minute',
+		'frequency': '60'
+		
+	};
+    
+	sendGet("https://api.tdameritrade.com/v1/marketdata/" + symbol.toUpperCase() +"/pricehistory", params, loadChart)
+	
+    break;
+	
+  case 'month':
+  CHART_TIME = rangeBack;
+  params = {
+		
+		'apikey': CON_KEY,
+		'periodType': 'month',
+		'period': '1',
+		'frequencyType': 'daily',
+		'frequency': '1'
+		
+	};
+	
+	sendGet("https://api.tdameritrade.com/v1/marketdata/" + symbol.toUpperCase() +"/pricehistory", params, loadChart)
+	
+    break;
+	
+  case 'year':
+  CHART_TIME = rangeBack;
+  params = {
+		
+		'apikey': CON_KEY,
+		'periodType': 'year',
+		'period': '1',
+		'frequencyType': 'weekly',
+		'frequency': '1'
+		
+	};
+	
+	sendGet("https://api.tdameritrade.com/v1/marketdata/" + symbol.toUpperCase() +"/pricehistory", params, loadChart)
+	
+    break;
+  default:
+  CHART_TIME = 'ytd';
+    params = {
+		
+		'apikey': CON_KEY,
+		'periodType': 'ytd',
+		'period': '1',
+		'frequencyType': 'weekly',
+		'frequency': '1'
+		
+	};
+	
+	sendGet("https://api.tdameritrade.com/v1/marketdata/" + symbol.toUpperCase() +"/pricehistory", params, loadChart)
+	
+}
+	
+}
+
+
+function conv(t, freq){
+  var a = new Date(t);
+  var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  var year = a.getFullYear();
+  var month = months[a.getMonth()];
+  var date = a.getDate();
+  var hour = a.getHours();
+  var min = a.getMinutes();
+  var sec = a.getSeconds();
+  var time = date + ' ' + month + ' ' + year + ' ' + hour + ':' + min + ':' + sec ;
+
+  
+  
+  
+  	switch(freq) {
+  case 'day':
+    
+	return (month+"").padStart(2, '0') + " " + (date+"").padStart(2, '0') + " " +(hour+"").padStart(2, '0') + ':' + (min+"").padEnd(2, '0');
+	
+
+	
+  case 'week':
+  
+  return (month+"").padStart(2, '0') + " " + (date+"").padStart(2, '0') + " " +(hour+"").padStart(2, '0') + ':' + (min+"").padEnd(2, '0');
+	
+
+	
+  
+    break;
+	
+  case 'month':
+  
+  return (month+"").padStart(2, '0') + " " + (date+"").padStart(2, '0') + " " + year;
+	
+
+	
+  
+
+    break;
+	
+  case 'year':
+  return (month+"").padStart(2, '0') +  " " + year;
+	
+
+	
+    break;
+  default:
+  return (month+"").padStart(2, '0') +  " " + (date+"").padStart(2, '0') + " " + year;
+	
+    
+}
+}
+
+function loadChart(data){
+	
+	rawJSONObject=JSON.parse(data);
+	
+	candles = rawJSONObject['candles'];
+	
+	dataArr = [];
+	labelArr = [];
+	
+	for(i = 0; i < candles.length; i++){
+		
+		dataArr.push(candles[i].open);
+		labelArr.push(conv(candles[i].datetime, CHART_TIME));
+		
+	}
+	
+	if(CURR_CHART !== null){
+		CURR_CHART.destroy();
+	}
+	
+var graphElement = document.getElementById("stockGraph");
+CURR_CHART = new Chart(graphElement, {
+type: 'line',
+lineColor: "black",
+data: {
+
+
+    labels: labelArr,
+	lineColor: "red",
+  datasets: [{
+    axis: 'y',
+		lineColor: "red",
+    label: rawJSONObject.symbol + " $" + dataArr[dataArr.length - 1],
+    data: dataArr,
+    fill: false,
+    backgroundColor: [
+      'rgba(0, 0, 0, 0.2)'
+    ],
+    borderColor: [
+      'rgb(255, 99, 132)'
+    ],
+    borderWidth: 1
+  }]
+}
+});
+CURR_CHART.render();
+}
+
+</script>
+
+<input id="enterTicker" type="text" width="300"> </input>
+<input id="goButton" type="button" value="Get Data" onclick="getHistoricalQuote(document.getElementById('enterTicker').value.toUpperCase(), getSelectedRadioBtn())" />
+
+<div>
+    <input type="radio" id="range1"name="range" value="day" onclick="document.getElementById('goButton').click()" checked>
+    <label for="range1">Day</label>
+    
+	<input type="radio" id="range2" name="range" value="week" onclick="document.getElementById('goButton').click()">
+    <label for="range2">Week</label>
+	
+    <input type="radio" id="range3" name="range" value="month" onclick="document.getElementById('goButton').click()">
+    <label for="range3">Month</label>
+	
+	<input type="radio" id="range4" name="range" value="year" onclick="document.getElementById('goButton').click()">
+    <label for="range4">Year</label>
+	
+	<input type="radio" id="range5" name="range" value="ytd" onclick="document.getElementById('goButton').click()">
+    <label for="range5">YTD</label>
+	
+</div>
+
+
+<div id="chartContainer" style="height: 601px; width: 601px; margin:0 auto">
+
+<canvas id="stockGraph" width="400" height="400"></canvas>
+
+</div>
+
+
+
+
+
+</body>
