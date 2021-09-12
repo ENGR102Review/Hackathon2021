@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import './App.css';
 import Coin from './Coin';
-
+import Graph from './graph';
+import Routes from './routes';
 function App() {
   const [coins, setCoins] = useState([]);
   const [search, setSearch] = useState('');
@@ -40,6 +41,7 @@ function App() {
           />
         </form>
       </div>
+      <Graph />
       {filteredCoins.map(coin => {
         return (
           <Coin

@@ -2,17 +2,17 @@ import React from 'react';
 import {Line} from 'react-chartjs-2';
 
 const state = {
-  labels: ['January', 'February', 'March',
-           'April', 'May'],
+  labels: ['BTC', 'ETH', 'ADA',
+           'USDT', 'BNB'],
   datasets: [
     {
-      label: 'Rainfall',
+      label: 'Crypto Trend',
       fill: false,
       lineTension: 0.5,
       backgroundColor: 'rgba(75,192,192,1)',
       borderColor: 'rgba(0,0,0,1)',
       borderWidth: 2,
-      data: [65, 59, 80, 81, 56]
+      data: [45585, 3335.89, 2.58, 1, 404.84]
     }
   ]
 }
@@ -27,7 +27,7 @@ export default class Graph extends React.Component {
             responsive: false,
               title:{
                 display:true,
-                text:'Average Rainfall per month',
+                text:'Crypto',
                 fontSize:10
               },
               legend:{
@@ -40,4 +40,3 @@ export default class Graph extends React.Component {
       );
     }
   }
-  
