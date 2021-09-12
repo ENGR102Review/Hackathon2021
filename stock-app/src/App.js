@@ -50,7 +50,8 @@ function App() {
             marketcap={coin.total_volume}
             volume={coin.market_cap}
             image={coin.image}
-            priceChange={coin.price_change_percentage_24h}
+            priceChangePercent={coin.price_change_percentage_24h}
+            priceChangeAmount={coin.price_change_24h}
           />
         );
       })}
